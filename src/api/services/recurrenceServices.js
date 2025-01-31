@@ -39,6 +39,17 @@ class RecurrenceServices {
 
                 obj.promotionID = transaction.promotionID
 
+                
+                //create new recurrency
+                obj.nextRecurrency = {
+                    number: obj.current.number + 1,
+                    recurrenceID: obj.id,
+                    status:'OPEN',
+                    currency: obj.offer.currency,
+                    price: obj.offer.price,
+                    transactions:[]
+                }
+
                 const recurrence = new Recurrence(obj)
                 await recurrence.save()
                 newRec = recurrence
@@ -114,9 +125,9 @@ class RecurrenceServices {
 
         await transactionServices.updateTransaction(t.id, tUpdates)
 
-        //TODO: Set recurrence's nextRecurrency
+        const newRecurrence = await this.updateRecurrence(r.id, {recurrencies: recs, current: {number:recs.length, id:newRec._id}})
 
-        await this.updateRecurrence(r.id, {recurrencies: recs, current: {number:recs.length, id:newRec._id}})
+        await this.updateNextRecurrency(r.id)
 
     }
 
@@ -126,18 +137,15 @@ class RecurrenceServices {
         //
         //pull recurencies from recurrence
         const recurrence = await this.getRecurrence(recID)
-        var recs = recurrence.recurrencies
-        //create new recurrency
-        var recurrency = {
-            number: recurrence.current.number + 1,
-            recurrenceID: recurrence.id,
-            status:'OPEN',
-            currency: recurrence.offer.currency,
-            price: recurrence.offer.price,
-            transactions:[]
-        }
+        
+        console.log(recurrence)
+        //create new recurrency according to recurrence's nextRecurrency
+        var rec = recurrence.nextRecurrency
 
-        const newRec = new Recurrency(recurrency)
+        //pull recurrencies from recurrence, to update later on
+        var recs = recurrence.recurrencies
+        
+        const newRec = new Recurrency(rec)
         await newRec.save()
 
         recs.push({id: newRec._id, number: newRec.number})
@@ -155,8 +163,26 @@ class RecurrenceServices {
         //create new transaction for new recurrency
         const newT = await this.newRecurrencyTransaction(recurrence.id)
         //update recurrence's nextRecurrency
+        await this.updateNextRecurrency(recID)
 
         return newRec
+    }
+
+    async updateNextRecurrency(recID)
+    {
+        //pull recurrence's current state
+        const recurrence = await this.getRecurrence(recID)
+        //create next recurrency, accessing the current recurrency info
+        var recurrency = {
+            number: recurrence.current.number + 1,
+            recurrenceID: recurrence.id,
+            status:'OPEN',
+            currency: recurrence.offer.currency,
+            price: recurrence.offer.price,
+            transactions:[]
+        }
+
+        const newRecurrence = await this.updateRecurrence(recurrence.id,{nextRecurrency: recurrency})
     }
 
     async newRecurrencyTransaction(recID)
