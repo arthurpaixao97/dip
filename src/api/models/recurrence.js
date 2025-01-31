@@ -92,7 +92,7 @@ const recurrenceSchema = new mongoose.Schema({
     date_next_charge: Date,
     createdAt: {
         type: Date,
-        default: new Date().toISOString(),
+        default: new Date(Date.now()).toISOString(),
         immutable: true
     },
     nextRecurrency: Object,

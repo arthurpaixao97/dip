@@ -29,7 +29,7 @@ class RecurrenceServices {
                 obj.frequency = offer.payment.frequency
                 obj.period = offer.payment.period
                 
-                const creationDate = new Date().toISOString()
+                const creationDate = new Date(Date.now()).toISOString()
                 obj.createdAt = dates.ISODate(creationDate)
                 obj.date_next_charge = dates.addDays(obj.createdAt, offer.payment.period)
                 obj.current = {

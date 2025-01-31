@@ -49,7 +49,7 @@ const offerSchema = new mongoose.Schema({
     },
     createdAt: {
         type: Date,
-        default: new Date().toISOString(),
+        default: new Date(Date.now()).toISOString(),
         immutable: true
     }
 })
