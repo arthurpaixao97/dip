@@ -243,7 +243,7 @@ class RecurrenceServices {
             const newRec = await Recurrency.findOneAndUpdate({_id: ryid}, {transactions: recurrency.transactions}, {new: true})
     
             await this.updateRecurrencyStatus(newT)
-            console.log(newT)
+            
             return newT
         }
     }
@@ -259,7 +259,7 @@ class RecurrenceServices {
         if(t.status == 'APPROVED' || t.status == 'COMPLETE')
         {
             const newRecurrency = await Recurrency.findOneAndUpdate({_id: t.recurrence.recurrencyID}, {status: 'SETTLED'}, {new: true})
-            console.log(newRecurrency)
+            
         } 
         if(t.status == 'CANCELLED')
         {
@@ -267,7 +267,7 @@ class RecurrenceServices {
             if(recurrency.status != 'SETTLED')
             {
                 const newRecurrency = await Recurrency.findOneAndUpdate({_id: t.recurrence.recurrencyID}, {status: 'DELAYED'}, {new: true})
-                console.log(newRecurrency)
+                
             }
         }
     }

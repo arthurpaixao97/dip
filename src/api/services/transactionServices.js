@@ -140,9 +140,11 @@ class TransactionServices {
             })
 
             await dpayServices.paymentScreening(newT)
+            
+            return newT
 
             //Return the new transaction
-            return newT
+            
         } catch (error) {
             throw error
         }
@@ -167,7 +169,6 @@ class TransactionServices {
 
                 if(t.status == 'APPROVED')
                 {
-                    console.log('transaction approved, create subs')
                     await recurrenceServices.newRecurrence(t.id)
                 }
             } else
