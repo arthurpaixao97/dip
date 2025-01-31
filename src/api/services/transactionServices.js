@@ -7,6 +7,7 @@ import offerServices from './offerServices.js'
 import partnershipServices from './partnershipServices.js'
 import promotionServices from './promotionServices.js'
 import recurrenceServices from './recurrenceServices.js'
+import dpayServices from './dpayServices.js'
 
 class TransactionServices {
     async getTransaction(tid){
@@ -19,26 +20,42 @@ class TransactionServices {
         return t
     }
 
-    async newTransaction(obj)
+    async newTransaction(t)
     {
         var newT = {}
 
         try {
+            var obj = t
             obj.status = 'INITIAL'
             await ids.transactionID()
             .then(async t => {
+                //Set the unique random T.ID
                 obj.id = t
+
+                //Get the dependencies for transaction creation
                 const product = await productServices.getProduct(obj.productID)
                 const offer = await offerServices.getOffer(obj.offerID)
+                const promoter = await promotionServices.getPromotion({id: obj.promotionID})
                 const partners = await partnershipServices.getPartnerships({productID: obj.productID})
                 const producer = await userServices.getUser(product.creatorID)
-                obj.offer = {
-                    id: offer.id,
-                    currency: offer.currency,
-                    price: offer.price
-                },
-                obj.currency = offer.currency
-                obj.price = offer.price
+
+                //Build transaction offer info
+                if(obj.offer == (null || undefined))
+                {
+                    obj.offer = {
+                        id: offer.id,
+                        currency: offer.currency,
+                        price: offer.price,
+                        payment: offer.payment
+                    }
+                }
+                
+
+                //Build transaction pricing info
+                obj.currency = obj.offer.currency
+                obj.price = obj.offer.price
+
+                //Prepare participants and set creator as participant
                 obj.participants = {
                     partners: [],
                     creator: {
@@ -46,21 +63,85 @@ class TransactionServices {
                         email: producer.email
                     }
                 }
-                for(let z = 0; z < partners.length; z++)
-                {
-                    const p = partners[z]
-                    obj.participants.partners.push({
-                        id:p.partnerID,
-                        email:p.email,
-                        perc:p.commission
-                    })
+
+                //Set DiP tax participant
+                obj.participants.tax = {
+                    id:0,
+                    email:"tax@dip.com",
+                    perc:0.1
                 }
+
+                //Set product services participants, if any
+                obj.participants.services = []
+
+                if(Array.isArray(product.services) && product.services.length > 0)
+                {
+                    for(let x = 0; x < product.services.length; x++)
+                    {
+                        const serv = product.services[x]
+                        obj.participants.services.push({
+                            id:serv.id,
+                            email:serv.email,
+                            perc:serv.perc,
+                            description:serv.description
+                        })
+                    }
+                }
+
+                //Set promoter participant, if any
+                if(promoter)
+                {
+                    obj.participants.promoter = {
+                        id:promoter.promoterID,
+                        email:promoter.email,
+                        perc:promoter.commission
+                    }
+                }
+
+                //Set partners participants, if any
+                if(Array.isArray(partners) && partners.length > 0)
+                {
+                    for(let z = 0; z < partners.length; z++)
+                    {
+                        const p = partners[z]
+                        obj.participants.partners.push({
+                            id:p.partnerID,
+                            email:p.email,
+                            perc:p.commission
+                        })
+                    }
+                }
+                
+                //Save transaction
                 const transaction = new Transaction(obj)
                 await transaction.save()
+
+                //Set commissions to just created transaction
                 await this.setCommissions(transaction.id)
+
+                //Fill return "newT" with new transaction data
                 newT = await this.getTransaction(transaction.id)
+
+                try {
+                    await userServices.newUser({
+                        email: transaction.buyer.email,
+                        profile: {
+                            document:transaction.buyer.document,
+                            name:transaction.buyer.name,
+                            publicName:transaction.buyer.name,
+                            address:transaction.address,
+                            phone:transaction.buyer.phone
+                        }
+                    })
+                } catch (error) {
+                    
+                }
+                
             })
 
+            await dpayServices.paymentScreening(newT)
+
+            //Return the new transaction
             return newT
         } catch (error) {
             throw error
@@ -69,35 +150,54 @@ class TransactionServices {
 
     async updateTransaction(tid, updates)
     {
-        await Transaction.findOneAndUpdate({id: tid}, updates, {new: true})
-        .then(t => {
-            return t
-        })
+        const newT = await Transaction.findOneAndUpdate({id: tid}, updates, {new: true})
+        return newT
+    }
+
+    async updateTransactionRecurrence(t)
+    {
+        const offer = t.offer
+
+        if(offer.payment.mode != 'SINGLE')
+        {
+            
+            if(!t.recurrence.recurrenceID)
+            {   
+            
+
+                if(t.status == 'APPROVED')
+                {
+                    console.log('transaction approved, create subs')
+                    await recurrenceServices.newRecurrence(t.id)
+                }
+            } else
+            {
+                await recurrenceServices.updateRecurrencyStatus(t)
+            }
+        }
     }
 
     async setPending(t)
     {
+        const transaction = await this.getTransaction(t)
         await this.updateTransaction(t, {status: 'PENDING'})
+        await this.updateTransactionRecurrence(transaction)
         return {status: 200, message:'Success'}
     }
 
     async approve(t)
     {
-        const transaction = await this.getTransaction(t)
+        const transaction = await this.getTransaction(t.id)
 
         if(transaction.status == 'APPROVED')
         {
             return {status: 400, message:'Transação já está Aprovada.'}
         } else
         {
-            const offer = await offerServices.getOffer(transaction.offer.id)
-            await this.updateTransaction(t, {status: 'APPROVED'})
-            await this.sendCommissions(t)
+            const newT = await this.updateTransaction(t.id, {status: 'APPROVED', recurrence: t.recurrence})
+            await this.sendCommissions(t.id)
 
-            if(!transaction.recurrence.recurrenceID && offer.payment.mode != 'SINGLE')
-            {
-                await recurrenceServices.newRecurrence(t)
-            }
+            await this.updateTransactionRecurrence(newT)
 
             return {status: 200, message:'Success'}
         }
@@ -122,26 +222,62 @@ class TransactionServices {
     
     async cancel(t)
     {
-        await this.updateTransaction(t, {status: 'CANCELLED'})
+        const newT = await this.updateTransaction(t.id, {status: 'CANCELLED', recurrence: t.recurrence})
+        await this.updateTransactionRecurrence(newT)
         return {status: 200, message:'Success'}
     }
 
     async setCommissions(tid){
+
+        //Find transaction
         const t = await this.getTransaction(tid)
         var a = t.price
         var c = []
-
+        
+        //DiP Tax
+        var tax_amt = parseFloat((t.participants.tax.perc * a).toFixed(2))
+        
         c.push({
-            user:0,
-            email:"tax@dip.com",
+            user:t.participants.tax.id,
+            email:t.participants.tax.email,
             currency:t.currency,
-            amount: parseFloat((0.1 * a).toFixed(2)),
+            amount: tax_amt,
             description:"Taxa de utilização"
         })
-        a -= (0.1 * a).toFixed(2)
-        a = parseFloat(a)
+        a -= (tax_amt).toFixed(2)
+        a = parseFloat(a).toFixed(2)
 
-        if(t.participants.promoter != (null || undefined))
+
+
+        //Services fees
+        if(Array.isArray(t.participants.services) && t.participants.services.length > 0)
+        {
+            var servicesAmount = 0
+            for(let x = 0; x < t.participants.services.length; x++)
+            {
+                var s = t.participants.services[x]
+                
+                var amt = parseFloat((s.perc * a).toFixed(2))
+                c.push({
+                    user: s.id,
+                    email: s.email,
+                    currency:t.currency,
+                    amount: amt,
+                    description: s.description
+                })
+                servicesAmount += amt
+            }
+        }
+
+        if(!isNaN(servicesAmount))
+        {
+            a -= (servicesAmount).toFixed(2)
+        }
+        a = parseFloat(a).toFixed(2)
+
+      
+        //Promoter
+        if(t.participants.promoter.id != (null || undefined))
         {
             c.push({
                 user: t.participants.promoter.id,
@@ -155,16 +291,18 @@ class TransactionServices {
             {
                 a -= t.participants.promoter.perc * a
             }
-            a = parseFloat(a.toFixed(2))
+            a = parseFloat(a.toFixed(2)).toFixed(2)
         }
-
-        if(Array.isArray(t.participants.partners))
+       
+        //Partners
+        var partnersAmount = 0
+        if(Array.isArray(t.participants.partners) && t.participants.partners.length > 0)
         {
-            var partnersAmount = 0
+            
             for(let x = 0; x < t.participants.partners.length; x++)
             {
                 var p = t.participants.partners[x]
-                console.log(a)
+                
                 var amt = parseFloat((p.perc * a).toFixed(2))
                 c.push({
                     user: p.id,
@@ -176,14 +314,16 @@ class TransactionServices {
                 partnersAmount += amt
             }
         }
-
+        
         a -= partnersAmount
-
+        a = parseFloat(a).toFixed(2)
+        
+        //Creator
         c.push({
             user: t.participants.creator.id,
             email: t.participants.creator.email,
             currency:t.currency,
-            amount: parseFloat((a).toFixed(2)),
+            amount: parseFloat(a).toFixed(2),
             description: "Comissão de criador"
         })
 

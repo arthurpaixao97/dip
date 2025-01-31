@@ -7,6 +7,10 @@ import viewsRouter from './src/views.js'
 import apiRouter from './src/api.js'
 import authRouter from './src/auth.js'
 
+import Recurrence from './src/api/models/recurrence.js'
+import Recurrency from './src/api/models/recurrency.js'
+import Transaction from './src/api/models/transaction.js'
+
 const PROTOCOL = process.env.PROTOCOL || 'http'
 const HOST = process.env.HOST || 'localhost'
 const PORT = process.env.PORT || 3000
@@ -21,6 +25,12 @@ app.use(cookieParser())
 app.use('/', viewsRouter)
 app.use('/api', apiRouter)
 app.use('/auth', authRouter)
+app.post('/refresh', async (req, res) => {
+  await Recurrence.deleteMany()
+  await Recurrency.deleteMany()
+  await Transaction.deleteMany()
+  res.send("ok")
+})
 
 app.listen(PORT, () => {
   mongoose.connect(DB_URI)

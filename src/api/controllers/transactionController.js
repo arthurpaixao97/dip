@@ -31,7 +31,7 @@ class TransactionController {
             })
         } catch (error) {
             console.log(error)
-            res.status(500).json(error)
+            res.status(500).send(error)
         }
     }
 

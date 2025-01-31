@@ -7,21 +7,31 @@ import bcrypt from 'bcrypt'
 class UserServices {
     async newUser(obj)
     {
-        var newUser = {}
-        try {
-            obj.password = bcrypt.hashSync(obj.password, 10)
-            await ids.productID()
-            .then(async i => {
-                obj.id = i
-                const user = new User(obj)
-                await user.save()
-                const wallet = await walletServices.newWallet(user.id)
-                const uw = {user:user, wallet:wallet}
-                newUser = uw
-            })
-            return newUser
-        } catch (error) {
-            throw error
+        const user = await this.getUsers({email: obj.email})
+        if(user.length > 0)
+        {
+            return {status: 400, message: "E-mail já cadastrado"}
+        } else
+        {
+            var newUser = {}
+            try {
+                if(obj.password)
+                {
+                    obj.password = bcrypt.hashSync(obj.password, 10)
+                }
+                await ids.productID()
+                .then(async i => {
+                    obj.id = i
+                    const user = new User(obj)
+                    await user.save()
+                    const wallet = await walletServices.newWallet(user.id)
+                    const uw = {user:user, wallet:wallet}
+                    newUser = uw
+                })
+                return newUser
+            } catch (error) {
+                throw error
+            }
         }
     }
     async getUser(uid)

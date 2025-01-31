@@ -7,6 +7,10 @@ const recurrenceSchema = new mongoose.Schema({
         unique:true,
         immutable: true
     },
+    productID: {
+        type:Number,
+        required:true
+    },
     offer: {
         id:{
             type:String,
@@ -37,8 +41,12 @@ const recurrenceSchema = new mongoose.Schema({
         type:[]
     },
     current:{
-        type:Number,
-        required:true
+        number:{
+            type:Number
+        },
+        id:{
+            type:String
+        }
     },
     status:{
         type:String,
@@ -87,7 +95,8 @@ const recurrenceSchema = new mongoose.Schema({
         default: new Date().toISOString(),
         immutable: true
     },
-    nextRecurrency: Object
+    nextRecurrency: Object,
+    promotionID:String
 })
 
 export default mongoose.model('Recurrence', recurrenceSchema)

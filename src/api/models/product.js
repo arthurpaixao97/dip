@@ -28,6 +28,10 @@ const productSchema = new mongoose.Schema({
     creatorID: {
         type: Number,
         required:true
+    },
+    services:{
+        type:[],
+        default:[]
     }
 })
 

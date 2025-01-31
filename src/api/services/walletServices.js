@@ -27,7 +27,7 @@ class WalletServices {
             {
                 wallet.balance[obj.currency] = 0
             }
-            wallet.balance[obj.currency] += parseFloat((obj.amount).toFixed(2))
+            wallet.balance[obj.currency] += parseFloat(obj.amount).toFixed(2)
     
             await Wallet.updateOne({userID: obj.user}, wallet)
             await this.addStatementItem(obj)

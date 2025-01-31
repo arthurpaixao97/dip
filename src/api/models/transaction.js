@@ -13,7 +13,7 @@ const transactionSchema = new mongoose.Schema({
     },
     createdAt: {
         type: Date,
-        default: new Date().toISOString(),
+        default: new Date(Date.now()).toISOString(),
         immutable: true
     },
     status: {
@@ -32,6 +32,20 @@ const transactionSchema = new mongoose.Schema({
         price: {
             type:Number,
             required:true
+        },
+        payment: {
+            mode: {
+                type: String, //SINGLE, SUBSCRIPTION, INSTALLMENT
+                required:true
+            },
+            frequency: {
+                type: Number, //-1 for undefined times, 1 for single payment, >1 for number of payments
+                required:true
+            },
+            period: {
+                type: Number, //0 for single payment, 7 for weekly, 30 for monthly, 60 for bimonthly, 90 for quarterly, 180 for semiannual, 365 for annual, >365 for number of years
+                required:true
+            }
         }
     },
     currency: {
@@ -81,12 +95,20 @@ const transactionSchema = new mongoose.Schema({
     },
     recurrence: {
         recurrencyNumber: Number,
+        recurrencyID: String,
         recurrenceID: String
     },
     participants: {
+        tax:{
+            id:Number,
+            email:String,
+            perc:Number
+        },
+        services:[],
         promoter:{
             id:Number,
-            perc:Number
+            perc:Number,
+            email:String
         },
         partners:[],
         creator:{
