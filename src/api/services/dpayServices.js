@@ -22,22 +22,25 @@ class DPay {
             if(res.orderStatus == 'AUTHORISED')
             {
                 console.log('APPROVED')
-                await transactionServices.approve(t)
+                const nt = await transactionServices.approve(t)
+                return nt
             }
 
             if(res.orderStatus == 'DECLINED')
             {
                 console.log('CANCELLED')
-                await transactionServices.cancel(t)
+                const nt = await transactionServices.cancel(t)
+                return nt
             }
 
             if(res.orderStatus == 'PENDING')
             {
                 console.log('PENDING')
-                await transactionServices.setPending(t)
+                const nt = await transactionServices.setPending(t)
+                return nt
             }
 
-            return res
+            
         })
     }    
 }

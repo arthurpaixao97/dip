@@ -193,6 +193,7 @@ class RecurrenceServices {
 
         var t = {
             //new transaction content
+            type:'DEFAULT',
             productID: recurrence.productID,
             offerID: recurrence.offer.id,
             offer: {

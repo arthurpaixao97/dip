@@ -20,6 +20,10 @@ const transactionSchema = new mongoose.Schema({
         type: String,
         required:true
     },
+    type:{
+        type:String,
+        default:'DEFAULT' //can be DEFAULT, CARD_VALIDATION, CHANGE_OFFER
+    },
     offer: {
         id:{
             type:String,

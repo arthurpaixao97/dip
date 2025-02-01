@@ -140,8 +140,8 @@ class TransactionServices {
             })
 
             await dpayServices.paymentScreening(newT)
-            
-            return newT
+            const returnTransaction = await this.getTransaction(newT.id)
+            return returnTransaction
 
             //Return the new transaction
             
