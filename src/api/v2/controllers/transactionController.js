@@ -30,7 +30,6 @@ class TransactionController {
                 content:transaction
             })
         } catch (error) {
-            console.log(error)
             res.status(500).send(error)
         }
     }
@@ -57,7 +56,6 @@ class TransactionController {
                 content: approve
             })
         } catch (error) {
-            console.log(error)
             res.status(500).json(error)
         }
     }

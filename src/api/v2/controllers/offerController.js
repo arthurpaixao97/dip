@@ -15,7 +15,7 @@ class OfferController {
     {
         try {
             const offer = await offerServices.newOffer(req.body)
-            res.status(offer.status).json({
+            res.status(offer.status).send({
                 status: (offer.status),
                 content:offer
             })

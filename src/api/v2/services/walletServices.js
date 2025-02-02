@@ -21,7 +21,7 @@ class WalletServices {
     }
     
     async addBalance(obj){
-        const wallet = await Wallet.findOne({userID: obj.user})
+        var wallet = await Wallet.findOne({userID: obj.user})
         if(wallet)
         {
             if(wallet.balance[obj.currency] == undefined)

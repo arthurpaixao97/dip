@@ -12,6 +12,24 @@ class Dates {
             throw error
         }
     }
+
+    days(x)
+    {
+        return 86400000 * x
+    }
+
+    toDays(x)
+    {
+        return x/86400000
+    }
+
+    daysBetweenDates(earliest, latest)
+    {
+        var date1 = new Date(earliest).getTime()
+        var date2 = new Date(latest).getTime()
+
+        return this.toDays(date2 - date1)
+    }
 }
 
 export default new Dates()

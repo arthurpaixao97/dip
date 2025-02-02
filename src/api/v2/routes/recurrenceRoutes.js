@@ -7,5 +7,8 @@ router.get('/', recurrenceController.getRecurrences)
 router.post('/', recurrenceController.newRecurrence)
 router.post('/:id/renewal', recurrenceController.newRecurrency)
 router.post('/charge/:id', recurrenceController.recurrencyNewCharge)
+router.post('/change_payment_info/:id', recurrenceController.changePaymentInfo)
+router.post('/change_offer/:id', recurrenceController.changeOffer)
+router.post('/change_offer_now/:id', recurrenceController.changeOfferNow)
 
 export default router

@@ -4,16 +4,18 @@ class DPay {
 
     async processTransaction(t)
     {
-        
+        var ret = null
         if(t.type != 'CARD_VALIDATION')
         {
             const p = await this.paymentScreening(t)
-            return p
+            ret = p
         } else
         {
             const v = await this.validateCard(t)
-            return v
+            ret = v
         }
+
+        return ret
     }
 
     async paymentScreening(t)
@@ -34,8 +36,6 @@ class DPay {
             endpoint = 'billet'
         }
 
-        console.log(t)
-
         await fetch(`http://localhost:9090/api/payment/${endpoint}`,{
             method:'POST',
             headers:{
@@ -50,7 +50,6 @@ class DPay {
         })
         .then(r => r.json())
         .then(async res => {
-            console.log(res)
             if(res.orderStatus == 'AUTHORISED')
             {
                 console.log('APPROVED')
@@ -79,7 +78,7 @@ class DPay {
 
     async validateCard(t)
     {
-        await fetch(`http://localhost:9090/api/validation`, {
+        var v = await fetch(`http://localhost:9090/api/validation`, {
             method:'POST',
             headers:{
                 'content-type':'application/json'
@@ -88,10 +87,10 @@ class DPay {
                 card_data:t.paymentInfo.details.credit_card
             })
         })
-        .then(r => r.json())
-        .then(async res => {
-            return res
-        })
+
+        v = await v.json()
+
+        return v
     }
 }
 

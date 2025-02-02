@@ -66,6 +66,12 @@ class TransactionServices {
         return finalTransaction
     }
 
+    async newValidationTransaction(t)
+    {
+        const validation = await dpayServices.processTransaction(t)
+        return validation
+    }
+
     async setParticipants(t, pd, pm, pt, pr)
     {
         //t:transaction; pd:product; pm:promotion; pt:partnerships; pr:producer

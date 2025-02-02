@@ -53,6 +53,36 @@ class RecurrenceController {
             res.status(500).json({ message: error.message })
         }
     }
+
+    async changePaymentInfo(req, res)
+    {
+        try {
+            const r = await recurrenceServices.changeRecurrencePaymentInfo(req.params.id, req.body)
+            res.status(201).json(r)
+        } catch (error) {
+            res.status(500).json({ message: error.message })
+        }
+    }
+
+    async changeOffer(req, res)
+    {
+        try {
+            const r = await recurrenceServices.changeRecurrenceOfferScheduled(req.params.id, req.body.new_offer)
+            res.status(201).json(r)
+        } catch (error) {
+            res.status(500).json({ message: error.message })
+        }
+    }
+
+    async changeOfferNow(req, res)
+    {
+        try {
+            const r = await recurrenceServices.changeRecurrenceOfferImediate(req.params.id, req.body.new_offer)
+            res.status(201).json(r)
+        } catch (error) {
+            res.status(500).json({ message: error.message })
+        }
+    }
 }
 
 export default new RecurrenceController()

@@ -2,8 +2,11 @@ import Recurrence from '../models/recurrence.js'
 import Recurrency from '../models/recurrency.js'
 import transactionServices from './transactionServices.js'
 import offerServices from './offerServices.js'
+import walletServices from './walletServices.js'
 import ids from '../../../utils/ids.js'
 import dates from '../../../utils/dates.js'
+import fin from '../../../utils/finances.js'
+import userServices from './userServices.js'
 
 class RecurrenceServices {
     
@@ -85,8 +88,8 @@ class RecurrenceServices {
         } else {
             newStatus = 'DELAYED'
         }
-
-        await this.updateRecurrence(r.recurrenceID, {status: newStatus})
+        const newRecurrence = await this.updateRecurrence(r.recurrenceID, {status: newStatus})
+        return newRecurrence
     }
 
     async updateRecurrenceCurrent(r)
@@ -164,6 +167,127 @@ class RecurrenceServices {
         }
     }
 
+    //RECURRENCE TASKS
+
+    async changeRecurrenceOfferScheduled(r, o)
+    {
+        if(typeof o == typeof 'string')
+        {
+            o = await offerServices.getOffer(o)
+        }
+        //r is the recurrence ID, o is the new offer
+        const recurrence = await this.getRecurrence(r)
+        var newNextRecurrency = recurrence.nextRecurrency
+        newNextRecurrency.offer = {
+            id: o.id,
+            currency: o.currency,
+            price: o.price,
+            mode: o.payment.mode,
+            frequency: o.payment.frequency,
+            period: o.payment.period
+        }
+
+        newNextRecurrency.currency = o.currency
+        newNextRecurrency.price = o.price
+
+        const newRecurrence = await this.updateRecurrence(r, {nextRecurrency: newNextRecurrency})
+        return newRecurrence
+    }
+
+    async changeRecurrenceOfferImediate(r, o)
+    {
+        if(typeof o == typeof 'string')
+        {
+            o = await offerServices.getOffer(o)
+        }
+        //r is the recurrence ID, o is the new offer
+        const recurrence = await this.getRecurrence(r)
+        const recurrency = await this.getRecurrency(recurrence.current.id)
+        var buyer = await userServices.getUsers({email: recurrence.buyer.email})
+        buyer = buyer[0]
+
+        var dailyPrice = fin.money(recurrence.offer.price / recurrence.offer.period)
+        var daysNotUsed = parseInt(recurrence.offer.period - dates.daysBetweenDates(recurrency.createdAt, dates.ISODate(Date.now()))) + 1
+        var proportionalDiscount = fin.money(dailyPrice * daysNotUsed)
+        var finalPrice = fin.money(o.price - proportionalDiscount)
+
+        if(finalPrice < 0)
+        {
+            await walletServices.addBalance({
+                user: buyer.id,
+                currency: recurrence.offer.currency,
+                amount: finalPrice * (-1),
+                description: `Saldo positivo de troca de oferta - recorrência ${recurrence.id}`
+            })
+
+            finalPrice = 0
+        }
+
+        var t = {
+            productID: recurrence.productID,
+            type: 'CHANGE_OFFER',
+            offer: o,
+            currency: o.currency,
+            price: finalPrice,
+            buyer: recurrence.buyer,
+            paymentInfo: recurrence.paymentInfo,
+            promotionID: recurrence.promotionID,
+            recurrence:{
+                recurrenceID: recurrence.id
+            }
+        }
+
+        const newT = await transactionServices.newTransaction(t)
+
+        if(newT.status == 'APPROVED')
+        {
+            var newNextRecurrency = recurrence.nextRecurrency
+            newNextRecurrency.offer = {
+                id: o.id,
+                currency: o.currency,
+                price: o.price,
+                mode: o.payment.mode,
+                frequency: o.payment.frequency,
+                period: o.payment.period
+            }
+
+            newNextRecurrency.currency = newT.currency
+            newNextRecurrency.price = newT.price
+
+            await this.updateRecurrence(r, {nextRecurrency: newNextRecurrency})
+            await this.newRecurrency({
+                recID: recurrence.id,
+                originTransaction: newT
+            })
+        }
+    }
+
+    async changeRecurrencePaymentInfo(r, p)
+    {
+        var ret = null
+        //r is the recurrence ID, p is the new paymentInfo object
+        if(p.method == 'CREDIT_CARD')
+        {
+            const validation = await transactionServices.newValidationTransaction({
+                type: 'CARD_VALIDATION',
+                paymentInfo: p
+            })
+
+            if(validation.validationStatus == 'AUTHORISED')
+            {
+                const recurrence = await this.updateRecurrence(r, {paymentInfo: p})
+                ret = recurrence
+            } else {
+                ret = {status: 400, message: 'Cartão recusado'}
+            }
+        } else {
+            const recurrence = await this.updateRecurrence(r, {paymentInfo: p})
+            ret = recurrence
+        }
+        
+        return ret
+    }
+
     //RECURRENCY CRUD
 
     async newRecurrency(query)
@@ -239,6 +363,9 @@ class RecurrenceServices {
                 ret = newRecurrency
             }
         }
+
+        //update recurrence's status
+        await this.updateRecurrenceStatus(ret)
         return ret
     }
 
@@ -303,6 +430,10 @@ class RecurrenceServices {
     async recurrencyNewCharge(r)
     {
         //r is a full recurrency
+        if(typeof r == typeof 'string')
+        {
+            r = await this.getRecurrency(r)
+        }
         const recurrence = await this.getRecurrence(r.recurrenceID)
         var newTransaction = {
             productID: recurrence.productID,
@@ -334,7 +465,7 @@ class RecurrenceServices {
         await this.updateRecurrencyStatus(t)
 
         return t
-    }   
+    }
 }
 
 export default new RecurrenceServices()
