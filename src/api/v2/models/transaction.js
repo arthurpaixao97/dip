@@ -18,8 +18,10 @@ const transactionSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        required:true
+        required:true,
+        default:'INITIAL'
     },
+    refusal:String,
     type:{
         type:String,
         default:'DEFAULT' //can be DEFAULT, CARD_VALIDATION, CHANGE_OFFER

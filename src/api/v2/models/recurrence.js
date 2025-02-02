@@ -23,19 +23,19 @@ const recurrenceSchema = new mongoose.Schema({
         price: {
             type:Number,
             required:true
+        },
+        mode: {
+            type: String, //SUBSCRIPTION, INSTALLMENT
+            required:true
+        },
+        frequency: {
+            type: Number, //-1 for undefined times, 1 for single payment, >1 for number of payments
+            required:true
+        },
+        period: {
+            type: Number, //0 for single payment, 7 for weekly, 30 for monthly, 60 for bimonthly, 90 for quarterly, 180 for semiannual, 365 for annual, >365 for number of years
+            required:true
         }
-    },
-    mode: {
-        type: String, //SUBSCRIPTION, INSTALLMENT
-        required:true
-    },
-    frequency: {
-        type: Number, //-1 for undefined times, 1 for single payment, >1 for number of payments
-        required:true
-    },
-    period: {
-        type: Number, //0 for single payment, 7 for weekly, 30 for monthly, 60 for bimonthly, 90 for quarterly, 180 for semiannual, 365 for annual, >365 for number of years
-        required:true
     },
     recurrencies: {
         type:[]

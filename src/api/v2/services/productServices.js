@@ -1,5 +1,5 @@
 import Product from '../models/product.js'
-import ids from '../../utils/ids.js'
+import ids from '../../../utils/ids.js'
 import offerServices from './offerServices.js'
 
 

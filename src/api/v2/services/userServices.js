@@ -1,5 +1,5 @@
 import User from '../models/user.js'
-import ids from '../../utils/ids.js'
+import ids from '../../../utils/ids.js'
 import walletServices from './walletServices.js'
 import bcrypt from 'bcrypt'
 

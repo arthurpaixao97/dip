@@ -1,6 +1,6 @@
 import Offer from '../models/offer.js'
 import productServices from './productServices.js'
-import ids from '../../utils/ids.js'
+import ids from '../../../utils/ids.js'
 
 class OfferServices {
     async newOffer(obj)

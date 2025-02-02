@@ -1,5 +1,6 @@
 import Wallet from '../models/wallet.js'
-import dates from '../../utils/dates.js'
+import dates from '../../../utils/dates.js'
+import fin from '../../../utils/finances.js'
 
 class WalletServices {
     async addStatementItem(obj){
@@ -27,7 +28,7 @@ class WalletServices {
             {
                 wallet.balance[obj.currency] = 0
             }
-            wallet.balance[obj.currency] += parseFloat(obj.amount).toFixed(2)
+            wallet.balance[obj.currency] += fin.money(obj.amount)
     
             await Wallet.updateOne({userID: obj.user}, wallet)
             await this.addStatementItem(obj)

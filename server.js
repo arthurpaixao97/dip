@@ -7,9 +7,9 @@ import viewsRouter from './src/views.js'
 import apiRouter from './src/api.js'
 import authRouter from './src/auth.js'
 
-import Recurrence from './src/api/models/recurrence.js'
-import Recurrency from './src/api/models/recurrency.js'
-import Transaction from './src/api/models/transaction.js'
+import Recurrence from './src/api/v2/models/recurrence.js'
+import Recurrency from './src/api/v2/models/recurrency.js'
+import Transaction from './src/api/v2/models/transaction.js'
 
 const PROTOCOL = process.env.PROTOCOL || 'http'
 const HOST = process.env.HOST || 'localhost'

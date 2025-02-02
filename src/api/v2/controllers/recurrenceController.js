@@ -37,7 +37,7 @@ class RecurrenceController {
     async newRecurrency(req, res)
     {
         try {
-            const recurrence = await recurrenceServices.newRecurrency(req.params.id)
+            const recurrence = await recurrenceServices.newRecurrency({recID: req.params.id})
             res.status(201).json(recurrence)
         } catch (error) {
             res.status(500).json({ message: error.message })

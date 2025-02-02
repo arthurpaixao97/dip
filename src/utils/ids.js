@@ -1,9 +1,9 @@
-import User from '../../src/api/models/user.js'
-import Product from '../../src/api/models/product.js'
-import Transaction from '../../src/api/models/transaction.js'
-import Offer from '../../src/api/models/offer.js'
-import Recurrence from '../../src/api/models/recurrence.js'
-import Promotion from '../../src/api/models/promotion.js'
+import User from '../../src/api/v2/models/user.js'
+import Product from '../../src/api/v2/models/product.js'
+import Transaction from '../../src/api/v2/models/transaction.js'
+import Offer from '../../src/api/v2/models/offer.js'
+import Recurrence from '../../src/api/v2/models/recurrence.js'
+import Promotion from '../../src/api/v2/models/promotion.js'
 
 class IDs {
     

@@ -1,5 +1,5 @@
 import Promotion from '../models/promotion.js'
-import ids from '../../utils/ids.js'
+import ids from '../../../utils/ids.js'
 
 class PromotionServices {
     
