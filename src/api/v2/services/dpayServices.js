@@ -10,12 +10,10 @@ class DPay {
         {
             const p = await this.paymentScreening(t)
             ret = p
-            return p
         } else
         {
             const v = await this.validateCard(t)
             ret = v
-            return v
         }
 
         return ret
@@ -67,7 +65,6 @@ class DPay {
                     console.log('APPROVED')
                     const nt = await transactionServices.approve(t)
                     ret = nt
-                    return nt
                 }
     
                 if(res.orderStatus == 'DECLINED')
@@ -76,7 +73,6 @@ class DPay {
                     t.refusal = res.reason
                     const nt = await transactionServices.cancel(t)
                     ret = nt
-                    return nt
                 }
             } else if(res.payment.status == 'PENDING')
             {
@@ -85,7 +81,6 @@ class DPay {
                 t.link = res.payment.link
                 const nt = await transactionServices.setPending(t)
                 ret = nt
-                return nt
             }
             
         })
