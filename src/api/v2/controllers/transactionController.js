@@ -47,6 +47,16 @@ class TransactionController {
         }
     }
 
+    async gatewayUpdate(req, res)
+    {
+        try {
+            const gtwupdate = await transactionServices.gatewayUpdate(req.params.id, req.body)
+            res.status(201).send({content: gtwupdate})
+        } catch (error) {
+            res.status(400).json(error)
+        }
+    }
+
     async approveTransaction(req, res)
     {
         try {

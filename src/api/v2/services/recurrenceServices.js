@@ -10,7 +10,7 @@ import userServices from './userServices.js'
 
 class RecurrenceServices {
     
-    //RECURRENCE CRUD
+    //RECURRENCE FUNCTIONS
 
     async newRecurrence(t)
     {
@@ -167,16 +167,48 @@ class RecurrenceServices {
         }
     }
 
+    validateOfferChange(r, o)
+    {
+        //r is full recurrence, o is full offer
+        
+        //conditions for valid offer change
+        try {
+            var criteria = []
+            //push criteria into criteria array
+            criteria.push(o.payment.mode == r.offer.mode)
+
+            var result = true
+            //test if the whole array is true, if any false, return false
+            criteria.forEach(c => {
+                if(!c)
+                {
+                    result = false
+                }
+            })
+
+            //if code reaches here, all is true, return true
+            return result
+        } catch (error) {
+            return false
+        }
+    }
+
     //RECURRENCE TASKS
 
     async changeRecurrenceOfferScheduled(r, o)
     {
+        //r is the recurrence ID, o is the new offer
         if(typeof o == typeof 'string')
         {
             o = await offerServices.getOffer(o)
         }
-        //r is the recurrence ID, o is the new offer
         const recurrence = await this.getRecurrence(r)
+
+        if(!this.validateOfferChange(recurrence, o))
+        {
+            throw new Error("Invalid offer change");
+        }
+
         var newNextRecurrency = recurrence.nextRecurrency
         newNextRecurrency.offer = {
             id: o.id,
@@ -202,6 +234,12 @@ class RecurrenceServices {
         }
         //r is the recurrence ID, o is the new offer
         const recurrence = await this.getRecurrence(r)
+
+        if(!this.validateOfferChange(recurrence, o))
+        {
+            throw new Error("Invalid offer change");
+        }
+
         const recurrency = await this.getRecurrency(recurrence.current.id)
         var buyer = await userServices.getUsers({email: recurrence.buyer.email})
         buyer = buyer[0]
@@ -288,7 +326,7 @@ class RecurrenceServices {
         return ret
     }
 
-    //RECURRENCY CRUD
+    //RECURRENCY FUNCTIONS
 
     async newRecurrency(query)
     {

@@ -122,7 +122,8 @@ const transactionSchema = new mongoose.Schema({
             email:String
         }
     },
-    commissions:[]
+    commissions:[],
+    link:String
 })
 
 export default mongoose.model('Transaction', transactionSchema)

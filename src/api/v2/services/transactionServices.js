@@ -25,6 +25,7 @@ class TransactionServices {
 
     async newTransaction(t)
     {
+        t.status = 'INITIAL'
         //pull offer, product, promotion, partnerships and creator user
         const offer = await offerServices.getOffer(t.offer.id)
         const product = await productServices.getProduct(t.productID)
@@ -293,8 +294,30 @@ class TransactionServices {
 
     async setPending(t)
     {
-        const newT = await this.updateTransaction(t, {status: 'PENDING'})
+        if(typeof t == typeof 'string')
+        {
+            t = await this.getTransaction(t)
+        }
+        const newT = await this.updateTransaction(t.id, {status: 'PENDING', link:t.link})
         return newT
+    }
+
+    async gatewayUpdate(t, body)
+    {
+        var ret = null
+
+        const transaction = await this.getTransaction(t)
+        console.log(body)
+        if(body.payment.status == 'AUTHORISED')
+        {
+            const newT = await this.approve(transaction)
+            ret = newT
+        } else {
+            const newT = await this.cancel(transaction)
+            ret = newT
+        }
+
+        return ret
     }
 
     async approve(t)

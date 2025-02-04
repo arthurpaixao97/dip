@@ -1,4 +1,5 @@
 import transactionServices from "./transactionServices.js"
+import URI from "../../../utils/uris.js"
 
 class DPay {
 
@@ -9,10 +10,12 @@ class DPay {
         {
             const p = await this.paymentScreening(t)
             ret = p
+            return p
         } else
         {
             const v = await this.validateCard(t)
             ret = v
+            return v
         }
 
         return ret
@@ -44,32 +47,45 @@ class DPay {
             body:JSON.stringify({
                 payment:{
                     method:t.paymentInfo.method,
-                    credit_card:t.paymentInfo.details.credit_card
+                    credit_card:t.paymentInfo.details.credit_card,
+                    currency: t.currency,
+                    price: t.price,
+                    merchant:{
+                        reference:t.id,
+                        callbackURL: `${URI.baseURL()}/api/v2/transactions/${t.id}/gateway_update`
+                    },
+                    shopper:t.buyer
                 }
             })
         })
         .then(r => r.json())
         .then(async res => {
-            if(res.orderStatus == 'AUTHORISED')
+            if(t.paymentInfo.method == 'CREDIT_CARD')
             {
-                console.log('APPROVED')
-                const nt = await transactionServices.approve(t)
-                ret = nt
-            }
-
-            if(res.orderStatus == 'DECLINED')
-            {
-                console.log('CANCELLED')
-                t.refusal = res.reason
-                const nt = await transactionServices.cancel(t)
-                ret = nt
-            }
-
-            if(res.orderStatus == 'PENDING')
+                if(res.orderStatus == 'AUTHORISED')
+                {
+                    console.log('APPROVED')
+                    const nt = await transactionServices.approve(t)
+                    ret = nt
+                    return nt
+                }
+    
+                if(res.orderStatus == 'DECLINED')
+                {
+                    console.log('CANCELLED')
+                    t.refusal = res.reason
+                    const nt = await transactionServices.cancel(t)
+                    ret = nt
+                    return nt
+                }
+            } else if(res.payment.status == 'PENDING')
             {
                 console.log('PENDING')
+                console.log(res.payment)
+                t.link = res.payment.link
                 const nt = await transactionServices.setPending(t)
                 ret = nt
+                return nt
             }
             
         })
