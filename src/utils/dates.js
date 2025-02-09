@@ -30,6 +30,18 @@ class Dates {
 
         return this.toDays(date2 - date1)
     }
+
+    isOverdue(date)
+    {
+        var ret = false
+
+        if(new Date(Date.now()).getTime() > new Date(date).getTime())
+        {
+            ret = true
+        }
+
+        return ret
+    }
 }
 
 export default new Dates()

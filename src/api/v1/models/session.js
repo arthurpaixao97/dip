@@ -18,12 +18,6 @@ const sessionSchema = new mongoose.Schema({
     },
     expiresAt: {
         type: Date
-    },
-    role: {
-        type: String
-    },
-    permissions: {
-        type: [String]
     }
 })
 

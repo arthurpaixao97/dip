@@ -45,6 +45,12 @@ class UserServices {
         const users = await User.find(query)
         return users
     }
+
+    async getUserByEmail(email)
+    {
+        const user = await User.findOne({email: email})
+        return user
+    }
 }
 
 export default new UserServices()
